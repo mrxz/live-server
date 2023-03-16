@@ -386,6 +386,21 @@ LiveServer.start = function (options) {
 			ws.send("connected");
 		};
 
+		ws.onmessage = function (event) {
+			const data = JSON.parse(event.data);
+			switch(data.cmd) {
+				case 'log':
+					console.log(`[Client ${clients.indexOf(ws)}]`.bold.green, ...data.arguments);
+					break;
+				case 'warn':
+					console.warn(`[Client ${clients.indexOf(ws)}]`.bold.yellow, ...data.arguments);
+					break;
+				case 'error':
+					console.error(`[Client ${clients.indexOf(ws)}]`.bold.red, ...data.arguments);
+					break;
+			}
+		}
+
 		if (wait > 0) {
 			(function () {
 				var wssend = ws.send;

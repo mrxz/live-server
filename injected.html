@@ -25,6 +25,31 @@
 				else if (msg.data == 'refreshcss') refreshCSS();
 			};
 			console.log('Live reload enabled.');
+
+			// Override console.log/.warn/.error
+			const originalFunctions = {
+				log: console.log,
+				warn: console.warn,
+				error: console.error,
+			};
+			const buffer = [];
+			for(const func of Object.keys(originalFunctions)) {
+				console[func] = function() {
+					buffer.push({ cmd: func, arguments: [...arguments] });
+					originalFunctions[func](...arguments);
+				}
+			}
+
+			socket.onopen = function() {
+				for(const func of Object.keys(originalFunctions)) {
+					console[func] = function() {
+						socket.send(JSON.stringify({ cmd: func, arguments: [...arguments] }));
+						originalFunctions[func](...arguments);
+					}
+				}
+				// Send buffered events
+				buffer.splice(0).forEach(msg => socket.send(JSON.stringify(msg)));
+			}
 		})();
 	}
 	// ]]>
