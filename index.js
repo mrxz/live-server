@@ -11,6 +11,7 @@ var fs = require("fs"),
 	open = require("open"),
 	es = require("event-stream"),
 	os = require("os"),
+	crypto = require("crypto"),
 	chokidar = require("chokidar");
 require("colors");
 
@@ -381,6 +382,7 @@ LiveServer.start = function (options) {
 	// WebSocket
 	var clients = [];
 	server.addListener("upgrade", function (request, socket, head) {
+		const id = crypto.randomUUID().split('-')[0];
 		var ws = new WebSocket(request, socket, head);
 		ws.onopen = function () {
 			ws.send("connected");
@@ -388,15 +390,16 @@ LiveServer.start = function (options) {
 
 		ws.onmessage = function (event) {
 			const data = JSON.parse(event.data);
+			const time = new Date().toISOString().split('T')[1].substring(0, 12);
 			switch(data.cmd) {
 				case 'log':
-					console.log(`[Client ${clients.indexOf(ws)}]`.bold.green, ...data.arguments);
+					console.log(`[Client ${id} ${time}]`.bold.green, ...data.arguments);
 					break;
 				case 'warn':
-					console.warn(`[Client ${clients.indexOf(ws)}]`.bold.yellow, ...data.arguments);
+					console.warn(`[Client ${id} ${time}]`.bold.yellow, ...data.arguments);
 					break;
 				case 'error':
-					console.error(`[Client ${clients.indexOf(ws)}]`.bold.red, ...data.arguments);
+					console.error(`[Client ${id} ${time}]`.bold.red, ...data.arguments);
 					break;
 			}
 		}

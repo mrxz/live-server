@@ -33,9 +33,20 @@
 				error: console.error,
 			};
 			const buffer = [];
+			const stringifyArguments = (args) => {
+				return args.map(a => {
+					if(Array.isArray(a)) {
+						return a.map(entry => ""+entry);
+					}
+					if(typeof a === 'object') {
+						return Object.fromEntries(Object.entries(a).map(entry => [entry[0], ""+entry[1]]));
+					}
+					return a;
+				})
+			}
 			for(const func of Object.keys(originalFunctions)) {
 				console[func] = function() {
-					buffer.push({ cmd: func, arguments: [...arguments] });
+					buffer.push({ cmd: func, arguments: stringifyArguments([...arguments]) });
 					originalFunctions[func](...arguments);
 				}
 			}
@@ -43,7 +54,7 @@
 			socket.onopen = function() {
 				for(const func of Object.keys(originalFunctions)) {
 					console[func] = function() {
-						socket.send(JSON.stringify({ cmd: func, arguments: [...arguments] }));
+						socket.send(JSON.stringify({ cmd: func, arguments: stringifyArguments([...arguments]) }));
 						originalFunctions[func](...arguments);
 					}
 				}
